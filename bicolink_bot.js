@@ -26,15 +26,24 @@ async function runBot(targetUrl, onLog) {
 
     const extractedCodes = [];
 
-    const browser = await puppeteer.launch({
+    // Gunakan system Chromium di Railway (via nixpacks), atau bundled Chromium di lokal
+    const launchOptions = {
         headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-blink-features=AutomationControlled',
-            '--disable-dev-shm-usage'
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-software-rasterizer',
+            '--single-process'
         ]
-    });
+    };
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+    const browser = await puppeteer.launch(launchOptions);
+
 
     // Domain VALID safelink
     const VALID_DOMAINS = ['go.bicolink.net', 'bicolink.com', 'bewbin.com', 'newsbico.com',
