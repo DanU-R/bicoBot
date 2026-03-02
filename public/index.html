@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bicoBot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --surface2: #1a1a25;
+            --border: #2a2a3a;
+            --accent: #6c63ff;
+            --accent2: #a78bfa;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-url {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-url:focus {
+            border-color: var(--accent);
+        }
+
+        .input-url::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            background: var(--surface2);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-clear:hover {
+            color: var(--text);
+        }
+
+        /* Status bar */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .status-bar.visible {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Log terminal */
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .log-header h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .log-terminal {
+            background: #060609;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            height: 380px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            line-height: 1.7;
+        }
+
+        .log-line {
+            display: flex;
+            gap: 10px;
+            padding: 2px 0;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(2px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .log-time {
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .log-msg {
+            word-break: break-all;
+        }
+
+        .log-msg.info {
+            color: #93c5fd;
+        }
+
+        .log-msg.success {
+            color: var(--green);
+        }
+
+        .log-msg.code {
+            color: var(--accent2);
+            font-weight: 500;
+        }
+
+        .log-msg.warn {
+            color: var(--yellow);
+        }
+
+        .log-msg.error {
+            color: var(--red);
+        }
+
+        .log-msg.step {
+            color: #f0abfc;
+            font-weight: 600;
+        }
+
+        .log-msg.done {
+            color: var(--text-muted);
+        }
+
+        .log-msg.default {
+            color: var(--text);
+        }
+
+        /* Results box */
+        .results-box {
+            display: none;
+            background: #061910;
+            border: 1px solid #10b98144;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 14px;
+        }
+
+        .results-box.visible {
+            display: block;
+        }
+
+        .results-box h4 {
+            color: var(--green);
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .code-item {
+            background: #0a2a1a;
+            border: 1px solid #10b98133;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .code-item span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent2);
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            flex-shrink: 0;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.15s;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .copy-btn.copied {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .empty-log {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 60px 0;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>🤖 bicoBot</h1>
+        <p>Otomasi bypass safelink & ekstraksi kode file</p>
+    </div>
+
+    <div class="container">
+
+        <!-- Input Card -->
+        <div class="card">
+            <div class="input-group">
+                <input type="text" class="input-url" id="urlInput" placeholder="https://bicolink.com/..."
+                    autocomplete="off" />
+                <button class="btn btn-primary" id="runBtn" onclick="startBot()">
+                    ▶ Jalankan
+                </button>
+            </div>
+
+            <!-- Status -->
+            <div class="status-bar" id="statusBar" style="margin-top:12px;">
+                <div class="spinner" id="spinner"></div>
+                <span id="statusText">Memulai bot...</span>
+            </div>
+        </div>
+
+        <!-- Log Card -->
+        <div class="card">
+            <div class="log-header">
+                <h3>📋 Log Real-time</h3>
+                <button class="btn btn-clear" style="padding:8px 14px; font-size:0.8rem;"
+                    onclick="clearLog()">Bersihkan</button>
+            </div>
+
+            <div class="log-terminal" id="logTerminal">
+                <div class="empty-log">Masukkan link Bicolink dan klik Jalankan...</div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-box" id="resultsBox">
+                <h4>✅ Kode Berhasil Diekstrak</h4>
+                <div id="codeList"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let sessionId = null;
+        let eventSource = null;
+        let extractedCodes = [];
+        let codeCounter = 0;
+
+        function genSessionId() {
+            return Math.random().toString(36).substring(2, 10);
+        }
+
+        function formatTime(ts) {
+            return new Date(ts).toLocaleTimeString('id-ID', { hour12: false });
+        }
+
+        function addLog(type, message, ts) {
+            const terminal = document.getElementById('logTerminal');
+
+            // Hapus placeholder jika ada
+            const empty = terminal.querySelector('.empty-log');
+            if (empty) empty.remove();
+
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `
+            <span class="log-time">${formatTime(ts || Date.now())}</span>
+            <span class="log-msg ${type || 'default'}">${escHtml(message)}</span>
+        `;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function escHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function clearLog() {
+            const terminal = document.getElementById('logTerminal');
+            terminal.innerHTML = '<div class="empty-log">Masukkan link Bicolink dan klik Jalankan...</div>';
+            document.getElementById('resultsBox').classList.remove('visible');
+            document.getElementById('codeList').innerHTML = '';
+            extractedCodes = [];
+            codeCounter = 0;
+        }
+
+        function setRunning(running) {
+            const btn = document.getElementById('runBtn');
+            const statusBar = document.getElementById('statusBar');
+            btn.disabled = running;
+            btn.textContent = running ? '⏳ Berjalan...' : '▶ Jalankan';
+            if (running) {
+                statusBar.classList.add('visible');
+            } else {
+                statusBar.classList.remove('visible');
+            }
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('statusText').textContent = msg;
+        }
+
+        function showCode(code) {
+            // Strip [N] prefix jika ada (dari server)
+            const rawCode = code.replace(/^\[\d+\]\s*/, '').trim();
+            extractedCodes.push(rawCode);
+            codeCounter++;
+            const resultsBox = document.getElementById('resultsBox');
+            const codeList = document.getElementById('codeList');
+            resultsBox.classList.add('visible');
+
+            const item = document.createElement('div');
+            item.className = 'code-item';
+            item.innerHTML = `
+            <span><span class="log-time">[${codeCounter}]</span>&nbsp;${escHtml(rawCode)}</span>
+            <button class="copy-btn" onclick="copyCode(this, '${escHtml(rawCode)}')">Salin</button>
+        `;
+            codeList.appendChild(item);
+        }
+
+        function copyCode(btn, code) {
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = '✓ Disalin';
+                btn.classList.add('copied');
+                setTimeout(() => { btn.textContent = 'Salin'; btn.classList.remove('copied'); }, 2000);
+            });
+        }
+
+        async function startBot() {
+            const url = document.getElementById('urlInput').value.trim();
+            if (!url || !url.startsWith('http')) {
+                alert('Masukkan URL Bicolink yang valid!');
+                return;
+            }
+
+            // Bersihkan log sebelumnya
+            clearLog();
+            setRunning(true);
+            updateStatus('Menghubungkan ke server...');
+
+            // Buat session baru
+            sessionId = genSessionId();
+
+            // Mulai SSE listener dulu
+            eventSource = new EventSource(`/stream/${sessionId}`);
+            eventSource.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+
+                    if (data.type === 'close') {
+                        eventSource.close();
+                        setRunning(false);
+                        return;
+                    }
+
+                    if (data.type === 'code') {
+                        showCode(data.message);
+                    }
+
+                    // Deteksi step header (--- STEP X ---)
+                    const type = data.message.includes('---') ? 'step' : data.type;
+                    addLog(type, data.message, data.ts);
+
+                    // Update status bar
+                    if (data.type === 'info' || data.type === 'step') {
+                        updateStatus(data.message.replace(/[🚀✅⚠️❌]/g, '').trim().substring(0, 60));
+                    }
+                } catch (e) { }
+            };
+
+            eventSource.onerror = () => {
+                eventSource.close();
+                setRunning(false);
+            };
+
+            // Kirim request ke server
+            try {
+                await fetch('/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, sessionId })
+                });
+            } catch (err) {
+                addLog('error', `Gagal menghubungi server: ${err.message}`);
+                setRunning(false);
+                eventSource.close();
+            }
+        }
+
+        // Enter key untuk submit
+        document.getElementById('urlInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('runBtn').disabled) {
+                startBot();
+            }
+        });
+    </script>
+
+</body>
+
+</html>
