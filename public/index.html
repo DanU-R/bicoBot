@@ -486,12 +486,8 @@
             // Buat session baru
             sessionId = genSessionId();
 
-            // Validasi backend URL jika di Vercel
-            if (isVercel && !backendBase) {
-                addLog('error', '❌ Masukkan Backend URL terlebih dahulu (Railway URL di atas).');
-                setRunning(false);
-                return;
-            }
+
+
 
             // Mulai SSE listener dulu
             eventSource = new EventSource(`${backendBase}/stream/${sessionId}`);
