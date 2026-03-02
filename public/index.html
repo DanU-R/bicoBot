@@ -354,19 +354,6 @@
                 </button>
             </div>
 
-            <!-- Backend URL config (muncul jika bukan localhost) -->
-            <div id="backendConfig" style="margin-top:12px; display:none;">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span style="color:var(--text-muted); font-size:0.78rem; white-space:nowrap;">🔌 Backend URL:</span>
-                    <input type="text" class="input-url" id="backendUrl" placeholder="https://bicobot.up.railway.app"
-                        style="font-size:0.78rem; padding:8px 12px;" oninput="saveBackendUrl(this.value)" />
-                </div>
-                <p style="color:var(--text-muted); font-size:0.72rem; margin-top:6px;">
-                    💡 Deploy backend ke <a href="https://railway.app" target="_blank"
-                        style="color:var(--accent);">Railway.app</a> lalu masukkan URL-nya di sini.
-                </p>
-            </div>
-
             <!-- Status -->
             <div class="status-bar" id="statusBar" style="margin-top:12px;">
                 <div class="spinner" id="spinner"></div>
@@ -401,25 +388,8 @@
         let extractedCodes = [];
         let codeCounter = 0;
 
-        // Deteksi apakah frontend berjalan di Vercel (bukan localhost)
-        const isVercel = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
-
-        // Ambil backend URL dari localStorage jika ada
-        let backendBase = isVercel
-            ? (localStorage.getItem('bicobot_backend') || '')
-            : window.location.origin;
-
-        // Tampilkan config input jika di Vercel
-        if (isVercel) {
-            document.getElementById('backendConfig').style.display = 'block';
-            const saved = localStorage.getItem('bicobot_backend');
-            if (saved) document.getElementById('backendUrl').value = saved;
-        }
-
-        function saveBackendUrl(val) {
-            backendBase = val.trim().replace(/\/$/, '');
-            if (backendBase) localStorage.setItem('bicobot_backend', backendBase);
-        }
+        // Backend URL Railway (statis)
+        const backendBase = 'https://9fyxdczc.up.railway.app';
 
         function genSessionId() {
             return Math.random().toString(36).substring(2, 10);
