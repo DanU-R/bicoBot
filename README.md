@@ -31,7 +31,7 @@ Buka browser ke **http://localhost:3000**, masukkan link Bicolink, klik **▶ Ja
 ```bash
 node bicolink_bot.js
 # atau
-node bicolink_bot.js https://bicolink.com/larjrsAl
+node bicolink_bot.js https://bicolink.com/
 ```
 
 ## Alur Bypass
@@ -40,7 +40,7 @@ node bicolink_bot.js https://bicolink.com/larjrsAl
 2. **Step 2** — Bypass pop-up via `a#image3` hingga berpindah ke halaman artikel
 3. **Step 3** — Tunggu timer selesai, navigasi via `#wpsafe-link`
 4. **Step 4** — Bypass fake captcha + Cloudflare Turnstile → klik "Get Link"
-5. **Step 5** — Masukkan password `yuri` di Snote, ekstrak kode
+5. **Step 5** — Masukkan password `***` di Snote, ekstrak kode
 
 ## Dependencies
 
