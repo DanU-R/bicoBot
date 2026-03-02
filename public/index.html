@@ -520,19 +520,23 @@
                 } catch (e) { }
             };
 
-            eventSource.onerror = () => {
+            eventSource.onerror = (e) => {
+                const rs = eventSource.readyState; // 0=CONNECTING, 1=OPEN, 2=CLOSED
+                addLog('error', `❌ SSE error (readyState=${rs}). Pastikan Railway online. URL: ${backendBase}`);
                 eventSource.close();
                 setRunning(false);
             };
 
             // Kirim request ke server
             try {
-                await fetch(`${backendBase}/run`, {
+                const resp = await fetch(`${backendBase}/run`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, sessionId })
                 });
+                if (!resp.ok) addLog('error', `❌ Server error: HTTP ${resp.status}`);
             } catch (err) {
+
                 addLog('error', `Gagal menghubungi server: ${err.message}`);
                 setRunning(false);
                 eventSource.close();
