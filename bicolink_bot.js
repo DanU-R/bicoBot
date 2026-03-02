@@ -399,7 +399,7 @@ async function runBot(targetUrl, onLog) {
                     log('success', `\n========================================`);
                     log('success', 'KODE BERHASIL DIEKSTRAK:');
                     codes.forEach((code, idx) => {
-                        log('code', `  [${idx + 1}] ${code}`);
+                        log('code', code); // Kirim kode mentah tanpa nomor agar UI yang merender
                         extractedCodes.push(code);
                     });
                     log('success', '========================================');

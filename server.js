@@ -72,8 +72,9 @@ app.post('/run', async (req, res) => {
         const codes = await runBot(url, sendLog);
 
         if (codes && codes.length > 0) {
-            sendLog('success', `✅ Berhasil! Ditemukan ${codes.length} kode:`);
-            codes.forEach((code, i) => sendLog('code', `[${i + 1}] ${code}`));
+            sendLog('success', `✅ Berhasil! Ditemukan ${codes.length} kode.`);
+            // Tidak perlu sendLog('code') lagi karena bicolink_bot.js sudah mengirimnya secara streaming
+
         } else {
             sendLog('warn', '⚠️ Bot selesai tapi tidak ada kode yang ditemukan.');
         }
