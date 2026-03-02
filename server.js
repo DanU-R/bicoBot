@@ -29,6 +29,9 @@ app.get('/stream/:sessionId', (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
+    // Kirim konfirmasi koneksi langsung
+    res.write(`data: ${JSON.stringify({ type: 'info', message: '🔗 Terhubung ke server Railway. Menunggu bot...', ts: Date.now() })}\n\n`);
+
     // Kirim ping agar koneksi tetap hidup
     const ping = setInterval(() => res.write(': ping\n\n'), 10000);
 
@@ -40,6 +43,7 @@ app.get('/stream/:sessionId', (req, res) => {
         sessions.delete(sessionId);
     });
 });
+
 
 // POST endpoint - mulai bot dengan URL yang diberikan
 app.post('/run', async (req, res) => {

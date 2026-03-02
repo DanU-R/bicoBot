@@ -26,8 +26,8 @@ async function runBot(targetUrl, onLog) {
 
     const extractedCodes = [];
 
-    // Gunakan system Chromium di Railway (via nixpacks), atau bundled Chromium di lokal
-    const launchOptions = {
+    // Gunakan Chromium bawaan puppeteer - nixpacks.toml menyediakan system libs
+    const browser = await puppeteer.launch({
         headless: true,
         args: [
             '--no-sandbox',
@@ -38,11 +38,7 @@ async function runBot(targetUrl, onLog) {
             '--disable-software-rasterizer',
             '--single-process'
         ]
-    };
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-        launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    }
-    const browser = await puppeteer.launch(launchOptions);
+    });
 
 
     // Domain VALID safelink
