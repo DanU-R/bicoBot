@@ -23,6 +23,8 @@ async function runBot(targetUrl, onLog) {
 
     const extractedCodes = [];
 
+    delete process.env.PUPPETEER_EXECUTABLE_PATH;
+
     const browser = await puppeteer.launch({
         headless: true,
         args: [
