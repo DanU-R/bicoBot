@@ -335,7 +335,7 @@ async function runBot(targetUrl, onLog) {
 
                 await mainPage.click(pwInput);
                 await mainPage.type(pwInput, 'yuri', { delay: 80 });
-                log('info', '[+] Password "yuri" dimasukkan.');
+                log('info', '[+] Password "****" dimasukkan.');
 
                 const submitted = await safeEval(mainPage, () => {
                     const pwEl = document.querySelector('input[name="password"], input[type="password"]');
