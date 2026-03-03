@@ -5,7 +5,6 @@ const { runBot } = require('./bicolink_bot');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS: izinkan frontend dari Vercel mengakses backend Railway
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -14,14 +13,11 @@ app.use((req, res, next) => {
     next();
 });
 
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Track active sessions
 const sessions = new Map();
 
-// SSE endpoint - stream bot logs secara real-time
 app.get('/stream/:sessionId', (req, res) => {
     const { sessionId } = req.params;
     res.setHeader('Content-Type', 'text/event-stream');
@@ -29,13 +25,9 @@ app.get('/stream/:sessionId', (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Access-Control-Allow-Origin', '*');
 
-    // Kirim konfirmasi koneksi langsung
-    res.write(`data: ${JSON.stringify({ type: 'info', message: '🔗 Terhubung ke server Railway. Menunggu bot...', ts: Date.now() })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'info', message: 'Terhubung ke server. Menunggu bot...', ts: Date.now() })}\n\n`);
 
-    // Kirim ping agar koneksi tetap hidup
     const ping = setInterval(() => res.write(': ping\n\n'), 10000);
-
-    // Simpan SSE response untuk session ini
     sessions.set(sessionId, res);
 
     req.on('close', () => {
@@ -44,8 +36,6 @@ app.get('/stream/:sessionId', (req, res) => {
     });
 });
 
-
-// POST endpoint - mulai bot dengan URL yang diberikan
 app.post('/run', async (req, res) => {
     const { url, sessionId } = req.body;
 
@@ -58,32 +48,27 @@ app.post('/run', async (req, res) => {
 
     res.json({ status: 'started' });
 
-    // Fungsi log yang akan mengirim event ke SSE client
     const sendLog = (type, message) => {
         const client = sessions.get(sessionId);
         if (client) {
-            const data = JSON.stringify({ type, message, ts: Date.now() });
-            client.write(`data: ${data}\n\n`);
+            client.write(`data: ${JSON.stringify({ type, message, ts: Date.now() })}\n\n`);
         }
     };
 
     try {
-        sendLog('info', `🚀 Memulai bot untuk: ${url}`);
+        sendLog('info', `Memulai bot untuk: ${url}`);
         const codes = await runBot(url, sendLog);
 
         if (codes && codes.length > 0) {
-            sendLog('success', `✅ Berhasil! Ditemukan ${codes.length} kode.`);
-            // Tidak perlu sendLog('code') lagi karena bicolink_bot.js sudah mengirimnya secara streaming
-
+            sendLog('success', `Selesai! Ditemukan ${codes.length} kode.`);
         } else {
-            sendLog('warn', '⚠️ Bot selesai tapi tidak ada kode yang ditemukan.');
+            sendLog('warn', 'Bot selesai tapi tidak ada kode yang ditemukan.');
         }
         sendLog('done', 'Otomasi selesai.');
     } catch (err) {
-        sendLog('error', `❌ Error: ${err.message}`);
+        sendLog('error', `Error: ${err.message}`);
         sendLog('done', 'Otomasi selesai dengan error.');
     } finally {
-        // Tutup SSE setelah selesai
         const client = sessions.get(sessionId);
         if (client) {
             client.write(`data: ${JSON.stringify({ type: 'close' })}\n\n`);
@@ -92,5 +77,5 @@ app.post('/run', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`\n🌐 Bicolink Bot Web UI running at http://localhost:${PORT}\n`);
+    console.log(`Bicolink Bot Web UI running at http://localhost:${PORT}`);
 });

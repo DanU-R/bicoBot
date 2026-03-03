@@ -10,9 +10,6 @@ const safeEval = async (page, fn, ...args) => {
     try { return await page.evaluate(fn, ...args); } catch (e) { return null; }
 };
 
-// ===================================================================
-// FUNGSI UTAMA BOT
-// ===================================================================
 async function runBot(targetUrl, onLog) {
     const log = (type, msg) => {
         const message = String(msg);
@@ -26,7 +23,6 @@ async function runBot(targetUrl, onLog) {
 
     const extractedCodes = [];
 
-    // Gunakan Chromium bawaan puppeteer - nixpacks.toml menyediakan system libs
     const browser = await puppeteer.launch({
         headless: true,
         args: [
@@ -40,8 +36,6 @@ async function runBot(targetUrl, onLog) {
         ]
     });
 
-
-    // Domain VALID safelink
     const VALID_DOMAINS = ['go.bicolink.net', 'bicolink.com', 'bewbin.com', 'newsbico.com',
         'lajangspot.web.id', 'snote.vip', 'snote.app', 'zireemilsoude.net', 'coinershop.com'];
 
@@ -80,9 +74,6 @@ async function runBot(targetUrl, onLog) {
         await mainPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         await mainPage.setViewport({ width: 1280, height: 800 });
 
-        // ======================================================================
-        // STEP 1: INITIAL ACCESS
-        // ======================================================================
         log('step', '\n--- STEP 1: INITIAL ACCESS ---');
         log('info', `Membuka URL: ${targetUrl}`);
         await mainPage.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -106,10 +97,7 @@ async function runBot(targetUrl, onLog) {
         if (generateClicked) log('success', 'Tombol Generate Text berhasil diklik.');
         else log('warn', 'Tombol Generate Text tidak ditemukan, melanjutkan...');
 
-        // ======================================================================
-        // STEP 2: BYPASS POP-UPS (IMAGE3 / OPEN BUTTON)
-        // ======================================================================
-        log('step', '\n--- STEP 2: BYPASSING POP-UPS (IMAGE3 LOGIC) ---');
+        log('step', '\n--- STEP 2: BYPASSING POP-UPS ---');
         const bicolinkHost = new URL(targetUrl).hostname;
 
         for (let i = 0; i < 30; i++) {
@@ -126,9 +114,6 @@ async function runBot(targetUrl, onLog) {
             await sleep(3000);
         }
 
-        // ======================================================================
-        // STEP 3: NEXT PAGE TRANSITION (cari #wpsafe-link)
-        // ======================================================================
         log('step', '\n--- STEP 3: NEXT PAGE TRANSITION ---');
         log('info', `URL saat ini: ${safeUrl(mainPage)}. Menunggu 20 detik...`);
         await sleep(20000);
@@ -151,20 +136,17 @@ async function runBot(targetUrl, onLog) {
                         return rect.width > 0 && rect.height > 0;
                     };
 
-                    // PRIORITAS 1: #wpsafe-link visible
                     const wpLink = document.querySelector('#wpsafe-link');
                     if (wpLink && isVisible(wpLink)) {
                         const anchor = wpLink.querySelector('a[href]');
                         if (anchor && anchor.href) {
-                            const btnText = (anchor.innerText || anchor.textContent || '').trim().substring(0, 30);
                             window.location.href = anchor.href;
-                            return `navigated: ${btnText || anchor.href.substring(0, 30)}`;
+                            return `navigated: ${anchor.href.substring(0, 30)}`;
                         }
                         const btn = wpLink.querySelector('button, a');
                         if (btn) { btn.click(); return 'wpsafe clicked'; }
                     }
 
-                    // PRIORITAS 2: Tutup popup overlay
                     for (const sel of ['button.close', '[aria-label="Close"]', '[aria-label="close"]', '.modal-close', '.popup-close']) {
                         const el = document.querySelector(sel);
                         if (el && isVisible(el)) { el.click(); return 'popup_closed'; }
@@ -175,7 +157,6 @@ async function runBot(targetUrl, onLog) {
                     });
                     if (closeEl) { closeEl.click(); return 'popup_closed'; }
 
-                    // PRIORITAS 3: Scroll dan cek timer
                     window.scrollBy(0, 150);
                     const timer = document.querySelector('#timer, .timer, #countdown');
                     const timerVal = timer ? timer.innerText.trim() : null;
@@ -206,13 +187,10 @@ async function runBot(targetUrl, onLog) {
 
         await sleep(5000);
 
-        // ======================================================================
-        // STEP 4: FAKE CAPTCHA & CLOUDFLARE TURNSTILE
-        // ======================================================================
         log('step', '\n--- STEP 4: CAPTCHA & TURNSTILE BYPASS ---');
         log('info', `URL saat ini: ${safeUrl(mainPage)}`);
 
-        log('info', 'Menangani Fake Captcha (I\'m not a robots)...');
+        log('info', 'Menangani Fake Captcha...');
         for (let i = 0; i < 10; i++) {
             const captchaResult = await safeEval(mainPage, () => {
                 const el = document.querySelector('#fake-captcha, #boxToToggle #fake-captcha, #fake-captcha-container #fake-captcha');
@@ -256,7 +234,6 @@ async function runBot(targetUrl, onLog) {
             }
         }
 
-        // Turnstile
         log('info', '\nMencari Cloudflare Turnstile...');
         try {
             await mainPage.waitForSelector('.cf-turnstile, iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]', { timeout: 30000 });
@@ -306,7 +283,6 @@ async function runBot(targetUrl, onLog) {
 
         await sleep(2000);
 
-        // Get Link
         log('info', '\nMencari tombol Get Link...');
         for (let i = 0; i < 5; i++) {
             const getLinkResult = await safeEval(mainPage, () => {
@@ -334,9 +310,6 @@ async function runBot(targetUrl, onLog) {
             await sleep(3000);
         }
 
-        // ======================================================================
-        // STEP 5: SNOTE - PASSWORD & EXTRACTION
-        // ======================================================================
         log('step', '\n--- STEP 5: SNOTE PASSWORD & EXTRACTION ---');
         try {
             await mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -392,17 +365,15 @@ async function runBot(targetUrl, onLog) {
                 await sleep(5000);
 
                 const bodyText = await safeEval(mainPage, () => document.body.innerText || '');
-                // Regex generik: v_FilesPan + satu digit + Bot_ + karakter alfanumerik
-                const codes = bodyText ? bodyText.match(/v_FilesPan\dBot_[A-Za-z0-9_\-]+/g) : null;
+                const rawCodes = bodyText ? bodyText.match(/v_FilesPan\dBot_[A-Za-z0-9_\-]+/g) : null;
+                const codes = rawCodes ? [...new Set(rawCodes)] : null;
 
                 if (codes && codes.length > 0) {
-                    log('success', `\n========================================`);
                     log('success', 'KODE BERHASIL DIEKSTRAK:');
-                    codes.forEach((code, idx) => {
-                        log('code', code); // Kirim kode mentah tanpa nomor agar UI yang merender
+                    codes.forEach((code) => {
+                        log('code', code);
                         extractedCodes.push(code);
                     });
-                    log('success', '========================================');
                 } else {
                     log('warn', 'Kode v_FilesPanXBot_ tidak ditemukan di halaman ini.');
                     log('info', '--- Konten halaman Snote (800 char) ---');
@@ -427,9 +398,6 @@ async function runBot(targetUrl, onLog) {
 
 module.exports = { runBot };
 
-// ===================================================================
-// MODE CLI (node bicolink_bot.js)
-// ===================================================================
 if (require.main === module) {
     (async () => {
         const args = process.argv.slice(2);
