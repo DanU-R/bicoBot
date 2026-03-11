@@ -6,10 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>bicoBot</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <style>
+        :root {
+            --bg: #030305;
+            --surface: rgba(13, 13, 22, 0.6);
+            --surface-hover: rgba(18, 18, 30, 0.7);
+            --border: rgba(255, 255, 255, 0.05);
+            --border-glow: rgba(108, 99, 255, 0.25);
+            --accent: #6c63ff;
+            --accent-glow: rgba(108, 99, 255, 0.4);
+            --accent2: #a78bfa;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-blur: 12px;
+            --nav-bg: rgba(3, 3, 5, 0.8);
+        }
+
         *,
         *::before,
         *::after {
@@ -18,19 +37,8 @@
             padding: 0;
         }
 
-        :root {
-            --bg: #0a0a0f;
-            --surface: #111118;
-            --surface2: #1a1a25;
-            --border: #2a2a3a;
-            --accent: #6c63ff;
-            --accent2: #a78bfa;
-            --green: #10b981;
-            --yellow: #f59e0b;
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --text: #e2e8f0;
-            --text-muted: #64748b;
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -38,145 +46,302 @@
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 40%, var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+        }
+
+        /* Ambient Background */
+        .ambient-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .glow-1,
+        .glow-2,
+        .glow-3 {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+
+        .glow-1 {
+            top: -10%;
+            left: -5%;
+            width: 500px;
+            height: 500px;
+            background: var(--accent);
+        }
+
+        .glow-2 {
+            bottom: -5%;
+            right: -5%;
+            width: 600px;
+            height: 600px;
+            background: var(--accent2);
+        }
+
+        .glow-3 {
+            top: 40%;
+            left: 50%;
+            width: 400px;
+            height: 400px;
+            background: #3b82f6;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1.0);
+            }
+
+            100% {
+                transform: translate(50px, 50px) scale(1.1);
+            }
+        }
+
+        /* Sections */
+        section {
+            padding: 120px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 32px 16px;
         }
 
-        .header {
+        /* Hero */
+        .hero {
+            padding-top: 180px;
             text-align: center;
-            margin-bottom: 40px;
         }
 
-        .header h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 50%, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
+            letter-spacing: -0.03em;
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        .header p {
+        .hero h1 span {
+            display: block;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            max-width: 600px;
+            margin: 0 auto 48px;
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+        }
+
+        /* Tool Section */
+        .tool-section {
+            padding-top: 0;
         }
 
         .container {
             width: 100%;
-            max-width: 720px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            max-width: 860px;
+            z-index: 10;
         }
 
         .card {
             background: var(--surface);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
+            border-radius: 28px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent, rgba(108, 99, 255, 0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(108, 99, 255, 0.15);
         }
 
         .input-group {
             display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .input-group .input-url {
-            min-width: 0;
-        }
-
-        .input-group .btn {
-            flex-shrink: 0;
+            gap: 16px;
+            margin-bottom: 8px;
         }
 
         .input-url {
             flex: 1;
-            background: var(--surface2);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px 18px;
+            border-radius: 16px;
+            padding: 18px 24px;
             color: var(--text);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s;
         }
 
         .input-url:focus {
             border-color: var(--accent);
-        }
-
-        .input-url::placeholder {
-            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.1);
         }
 
         .btn {
-            padding: 14px 28px;
-            border-radius: 10px;
+            padding: 18px 36px;
+            border-radius: 16px;
             border: none;
             cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--accent), #8b5cf6);
             color: white;
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
         }
 
         .btn-primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(108, 99, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(108, 99, 255, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         .btn-primary:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
         }
 
         .btn-clear {
-            background: var(--surface2);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-muted);
             border: 1px solid var(--border);
         }
 
         .btn-clear:hover {
+            background: rgba(255, 255, 255, 0.1);
             color: var(--text);
+            border-color: var(--text-muted);
         }
 
-        /* Status bar */
         .status-bar {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            background: var(--surface2);
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
-            font-size: 0.85rem;
-            display: none;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
         }
 
         .status-bar.visible {
-            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
         }
 
         .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--border);
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(108, 99, 255, 0.2);
             border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            flex-shrink: 0;
         }
 
         @keyframes spin {
@@ -185,103 +350,163 @@
             }
         }
 
-        /* Log terminal */
+        /* Features Section */
+        .features {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+
+        .feature-card i {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            color: var(--accent2);
+        }
+
+        .feature-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Log Terminal Refined */
         .log-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 14px;
+            margin-bottom: 24px;
+            gap: 12px;
         }
 
         .log-header h3 {
-            font-size: 0.85rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
+        }
+
+        .log-actions {
+            display: flex;
+            gap: 8px;
         }
 
         .log-terminal {
-            background: #060609;
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px;
-            height: 380px;
+            border-radius: 20px;
+            padding: 24px;
+            height: 420px;
             overflow-y: auto;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            line-height: 1.7;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .log-terminal::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-terminal::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
         }
 
         .log-line {
             display: flex;
-            gap: 10px;
-            padding: 2px 0;
-            animation: fadeIn 0.2s ease;
+            gap: 14px;
+            padding: 4px 0;
+            animation: logEntry 0.3s ease-out forwards;
         }
 
-        @keyframes fadeIn {
+        @keyframes logEntry {
             from {
                 opacity: 0;
-                transform: translateY(2px);
+                transform: translateX(-4px);
             }
 
             to {
                 opacity: 1;
+                transform: translateX(0);
             }
         }
 
         .log-time {
             color: var(--text-muted);
+            opacity: 0.6;
             flex-shrink: 0;
         }
 
-        .log-msg {
-            word-break: break-all;
-        }
-
         .log-msg.info {
-            color: #93c5fd;
+            color: #7dd3fc;
         }
 
         .log-msg.success {
-            color: var(--green);
+            color: #6ee7b7;
+            font-weight: 500;
         }
 
         .log-msg.code {
             color: var(--accent2);
-            font-weight: 500;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
         }
 
         .log-msg.warn {
-            color: var(--yellow);
+            color: #fcd34d;
         }
 
         .log-msg.error {
-            color: var(--red);
+            color: #fca5a5;
         }
 
         .log-msg.step {
-            color: #f0abfc;
+            color: #f9a8d4;
             font-weight: 600;
+            padding: 4px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 8px;
         }
 
-        .log-msg.done {
-            color: var(--text-muted);
-        }
-
-        .log-msg.default {
-            color: var(--text);
-        }
-
-        /* Results box */
         .results-box {
             display: none;
-            background: #061910;
-            border: 1px solid #10b98144;
-            border-radius: 10px;
-            padding: 16px;
-            margin-top: 14px;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            animation: slideIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .results-box.visible {
@@ -290,85 +515,154 @@
 
         .results-box h4 {
             color: var(--green);
-            font-size: 0.85rem;
-            margin-bottom: 10px;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        /* Results Grid */
+        #codeList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
         }
 
         .code-item {
-            background: #0a2a1a;
-            border: 1px solid #10b98133;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 16px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             gap: 10px;
+            position: relative;
         }
 
         .code-item span {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            color: var(--accent2);
+            font-size: 0.85rem;
+            color: #fff;
             word-break: break-all;
+            padding-right: 32px;
         }
 
-        .copy-btn {
-            flex-shrink: 0;
-            background: transparent;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            color: var(--text-muted);
-            padding: 4px 10px;
+        .code-item .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            font-size: 0.65rem;
+        }
+
+        .download-btn {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--accent2);
+            border: 1px solid rgba(108, 99, 255, 0.2);
+            border-radius: 10px;
+            padding: 8px 16px;
             cursor: pointer;
-            font-size: 0.75rem;
-            transition: all 0.15s;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .copy-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .copy-btn.copied {
-            border-color: var(--green);
-            color: var(--green);
+        .download-btn:hover {
+            background: var(--accent);
+            color: white;
         }
 
         .empty-log {
             color: var(--text-muted);
             text-align: center;
-            padding: 60px 0;
-            font-size: 0.85rem;
+            padding: 80px 0;
+            font-size: 0.9rem;
+            opacity: 0.5;
         }
 
-        @media (max-width: 600px) {
-            .header h1 {
-                font-size: 1.6rem;
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
             }
 
-            .header {
-                margin-bottom: 24px;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            nav {
+                padding: 0 20px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
             }
 
             .card {
-                padding: 16px;
+                padding: 24px;
+                border-radius: 20px;
             }
 
             .input-group {
                 flex-direction: column;
             }
 
-            .input-group .btn {
+            .btn {
                 width: 100%;
             }
 
-            .log-terminal {
-                height: 280px;
-            }
-
-            .btn {
-                padding: 12px 20px;
+            .feature-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -376,50 +670,103 @@
 
 <body>
 
-    <div class="header">
-        <h1>🤖 bicoBot</h1>
-        <p>Otomasi bypass safelink & ekstraksi kode file</p>
+    <nav>
+        <div class="logo">bicoBot</div>
+        <div class="nav-links">
+            <a href="#tool">Tool</a>
+            <a href="#features">Features</a>
+        </div>
+    </nav>
+
+    <div class="ambient-glow">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+        <div class="glow-3"></div>
     </div>
 
-    <div class="container">
+    <section class="hero">
+        <h1>Bypass Safelinks <span>With Intelligence.</span></h1>
+        <p>Automate your workflow with bicoBot. Fast, secure, and reliable extraction of protected file codes.</p>
+    </section>
 
-        <!-- Input Card -->
-        <div class="card">
-            <div class="input-group">
-                <input type="text" class="input-url" id="urlInput" placeholder="https://bicolink.com/..."
-                    autocomplete="off" />
-                <button class="btn btn-primary" id="runBtn" onclick="startBot()">
-                    ▶ Jalankan
-                </button>
+    <section id="tool" class="tool-section">
+        <div class="container">
+            <!-- Input Card -->
+            <div class="card" style="margin-bottom: 32px;">
+                <div class="input-group">
+                    <input type="text" class="input-url" id="urlInput" placeholder="Paste Bicolink URL here..."
+                        autocomplete="off" />
+                    <button class="btn btn-primary" id="runBtn" onclick="startBot()">
+                        <span>▶ Run Bot</span>
+                    </button>
+                </div>
+
+                <!-- Status -->
+                <div class="status-bar" id="statusBar">
+                    <div class="spinner" id="spinner"></div>
+                    <span id="statusText">Initialising session...</span>
+                </div>
             </div>
 
-            <!-- Status -->
-            <div class="status-bar" id="statusBar" style="margin-top:12px;">
-                <div class="spinner" id="spinner"></div>
-                <span id="statusText">Memulai bot...</span>
+            <!-- Log Card -->
+            <div class="card">
+                <div class="log-header">
+                    <h3
+                        style="font-family: 'Outfit'; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);">
+                        📋 Live Operations Log</h3>
+                    <div class="log-actions">
+                        <button class="btn btn-clear" style="padding:6px 12px; font-size:0.8rem; border-radius: 10px;"
+                            onclick="clearLog()">Clear</button>
+                    </div>
+                </div>
+
+                <div class="log-terminal" id="logTerminal">
+                    <div class="empty-log">Enter a link and hit "Run Bot" to start the operation.</div>
+                </div>
+
+                <!-- Results -->
+                <div class="results-box" id="resultsBox">
+                    <div class="results-header" style="margin-top: 32px;">
+                        <h4 style="font-family: 'Outfit'; color: var(--green); font-size: 1.1rem;">✅ Extracted Codes
+                        </h4>
+                        <button class="download-btn" onclick="downloadResults()">💾 Download All (.txt)</button>
+                    </div>
+                    <div id="codeList" style="margin-top: 16px;"></div>
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Log Card -->
-        <div class="card">
-            <div class="log-header">
-                <h3>📋 Log Real-time</h3>
-                <button class="btn btn-clear" style="padding:8px 14px; font-size:0.8rem;"
-                    onclick="clearLog()">Bersihkan</button>
-            </div>
-
-            <div class="log-terminal" id="logTerminal">
-                <div class="empty-log">Masukkan link Bicolink dan klik Jalankan...</div>
-            </div>
-
-            <!-- Results -->
-            <div class="results-box" id="resultsBox">
-                <h4>✅ Kode Berhasil Diekstrak</h4>
-                <div id="codeList"></div>
-            </div>
+    <section id="features" class="features">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-family: 'Outfit'; font-size: 2.5rem; margin-bottom: 16px;">Engineered for <span>Speed.</span>
+            </h2>
+            <p style="color: var(--text-muted);">The most advanced safelink bypass technology at your fingertips.</p>
         </div>
 
-    </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div style="font-size: 2.5rem; margin-bottom: 20px;">⚡</div>
+                <h3>Hyper Fast</h3>
+                <p>Advanced algorithmic processing ensures high-speed extraction from multiple providers.</p>
+            </div>
+            <div class="feature-card">
+                <div style="font-size: 2.5rem; margin-bottom: 20px;">🛡️</div>
+                <h3>Secure Edge</h3>
+                <p>Private proxy rotation and session management keep your operations anonymous and safe.</p>
+            </div>
+            <div class="feature-card">
+                <div style="font-size: 2.5rem; margin-bottom: 20px;">📊</div>
+                <h3>Grid Analytics</h3>
+                <p>Clear, responsive data presentation for easy management of extracted file codes.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer
+        style="padding: 60px 20px; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+        <p>© 2026 bicoBot Infrastructure. Built for Power Users.</p>
+    </footer>
 
     <script>
         let sessionId = null;
@@ -431,11 +778,11 @@
         const backendBase = 'https://bicobot-production.up.railway.app';
 
         function genSessionId() {
-            return Math.random().toString(36).substring(2, 10);
+            return Math.random().toString(36).substring(2, 12);
         }
 
         function formatTime(ts) {
-            return new Date(ts).toLocaleTimeString('id-ID', { hour12: false });
+            return new Date(ts).toLocaleTimeString('en-GB', { hour12: false });
         }
 
         function addLog(type, message, ts) {
@@ -461,7 +808,7 @@
 
         function clearLog() {
             const terminal = document.getElementById('logTerminal');
-            terminal.innerHTML = '<div class="empty-log">Masukkan link Bicolink dan klik Jalankan...</div>';
+            terminal.innerHTML = '<div class="empty-log">Enter a link and hit "Run Bot" to start the operation.</div>';
             document.getElementById('resultsBox').classList.remove('visible');
             document.getElementById('codeList').innerHTML = '';
             extractedCodes = [];
@@ -472,7 +819,7 @@
             const btn = document.getElementById('runBtn');
             const statusBar = document.getElementById('statusBar');
             btn.disabled = running;
-            btn.textContent = running ? '⏳ Berjalan...' : '▶ Jalankan';
+            btn.innerHTML = running ? '<span>⏳ Working...</span>' : '<span>▶ Run Bot</span>';
             if (running) {
                 statusBar.classList.add('visible');
             } else {
@@ -485,7 +832,6 @@
         }
 
         function showCode(code) {
-            // Strip [N] prefix jika ada (dari server)
             const rawCode = code.replace(/^\[\d+\]\s*/, '').trim();
             extractedCodes.push(rawCode);
             codeCounter++;
@@ -496,31 +842,47 @@
             const item = document.createElement('div');
             item.className = 'code-item';
             item.innerHTML = `
-            <span><span class="log-time">[${codeCounter}]</span>&nbsp;${escHtml(rawCode)}</span>
-            <button class="copy-btn" onclick="copyCode(this, '${escHtml(rawCode)}')">Salin</button>
+            <span>#${codeCounter} ${escHtml(rawCode)}</span>
+            <button class="copy-btn" onclick="copyCode(this, '${escHtml(rawCode)}')">Copy</button>
         `;
             codeList.appendChild(item);
         }
 
+        function downloadResults() {
+            if (extractedCodes.length === 0) return;
+            const text = extractedCodes.join('\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bicobot_results_${Date.now()}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
         function copyCode(btn, code) {
             navigator.clipboard.writeText(code).then(() => {
-                btn.textContent = '✓ Disalin';
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
                 btn.classList.add('copied');
-                setTimeout(() => { btn.textContent = 'Salin'; btn.classList.remove('copied'); }, 2000);
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
             });
         }
 
         async function startBot() {
             const url = document.getElementById('urlInput').value.trim();
             if (!url || !url.startsWith('http')) {
-                alert('Masukkan URL Bicolink yang valid!');
+                alert('Please enter a valid Bicolink URL!');
                 return;
             }
 
             // Bersihkan log sebelumnya
             clearLog();
             setRunning(true);
-            updateStatus('Menghubungkan ke server...');
+            updateStatus('Connecting to server...');
 
             // Buat session baru
             sessionId = genSessionId();
@@ -557,7 +919,7 @@
 
             eventSource.onerror = (e) => {
                 const rs = eventSource.readyState; // 0=CONNECTING, 1=OPEN, 2=CLOSED
-                addLog('error', `❌ SSE error (readyState=${rs}). Pastikan Railway online. URL: ${backendBase}`);
+                addLog('error', `❌ SSE connection failed. Is the server online?`);
                 eventSource.close();
                 setRunning(false);
             };
@@ -569,10 +931,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, sessionId })
                 });
-                if (!resp.ok) addLog('error', `❌ Server error: HTTP ${resp.status}`);
+                if (!resp.ok) addLog('error', `❌ Server responded with: HTTP ${resp.status}`);
             } catch (err) {
 
-                addLog('error', `Gagal menghubungi server: ${err.message}`);
+                addLog('error', `Connection error: ${err.message}`);
                 setRunning(false);
                 eventSource.close();
             }
