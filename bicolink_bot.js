@@ -39,7 +39,7 @@ async function runBot(targetUrl, onLog) {
     });
 
     const VALID_DOMAINS = ['go.bicolink.net', 'bicolink.com', 'bewbin.com', 'newsbico.com',
-        'lajangspot.web.id', 'snote.vip', 'snote.app', 'zireemilsoude.net', 'coinershop.com'];
+        'lajangspot.web.id', 'snote.vip', 'snote.app', 'zireemilsoude.net', 'coinershop.com', 'google.com/url'];
 
     let mainPage;
     browser.on('targetcreated', async (target) => {
@@ -77,8 +77,33 @@ async function runBot(targetUrl, onLog) {
         await mainPage.setViewport({ width: 1280, height: 800 });
 
         log('step', '\n--- STEP 1: INITIAL ACCESS ---');
-        log('info', `Membuka URL: ${targetUrl}`);
-        await mainPage.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        let initialUrl = targetUrl;
+        if (!targetUrl.includes('google.com/url')) {
+            initialUrl = `https://www.google.com/url?sa=t&source=web&rct=j&url=${encodeURIComponent(targetUrl)}`;
+            log('info', `Membuka via Google Redirect: ${targetUrl}`);
+        } else {
+            log('info', `Membuka URL: ${targetUrl}`);
+        }
+        await mainPage.goto(initialUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+        // Bypass Google Redirect Notice
+        const currentUrl = safeUrl(mainPage);
+        if (currentUrl.includes('google.com/url')) {
+            log('info', 'Mendeteksi halaman Google Redirect Notice, mencoba bypass...');
+            const googleRedirectClicked = await safeEval(mainPage, () => {
+                const el = document.querySelector('.fTk7vd a[href^="http"]');
+                if (el) {
+                    el.click();
+                    return true;
+                }
+                return false;
+            });
+            if (googleRedirectClicked) {
+                log('success', 'Berhasil mengklik redirect link.');
+                try { await mainPage.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }); } catch (e) {}
+            }
+        }
+
         log('info', 'Menunggu 20 detik untuk inisialisasi...');
         await sleep(20000);
 
