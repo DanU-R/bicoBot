@@ -842,8 +842,14 @@
 
             const item = document.createElement('div');
             item.className = 'code-item';
+            
+            let content = escHtml(rawCode);
+            if (rawCode.startsWith('http')) {
+                content = `<a href="${escHtml(rawCode)}" target="_blank" style="color:var(--accent2); text-decoration:none; border-bottom: 1px dashed var(--accent2);">${escHtml(rawCode)}</a>`;
+            }
+
             item.innerHTML = `
-            <span>#${codeCounter} ${escHtml(rawCode)}</span>
+            <span>#${codeCounter} ${content}</span>
             <button class="copy-btn" onclick="copyCode(this, '${escHtml(rawCode)}')">Copy</button>
         `;
             codeList.appendChild(item);
