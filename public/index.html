@@ -256,6 +256,7 @@
             font-size: 0.95rem;
             outline: none;
             transition: all 0.3s;
+            line-height: 1.6;
         }
 
         .input-url:focus {
@@ -694,8 +695,8 @@
             <!-- Input Card -->
             <div class="card" style="margin-bottom: 32px;">
                 <div class="input-group">
-                    <input type="text" class="input-url" id="urlInput" placeholder="Paste Bicolink URL here..."
-                        autocomplete="off" />
+                    <textarea class="input-url" id="urlInput" placeholder="Paste Bicolink URLs here (one per line)..."
+                        autocomplete="off" rows="3" style="resize: vertical; min-height: 80px;"></textarea>
                     <button class="btn btn-primary" id="runBtn" onclick="startBot()">
                         <span>▶ Run Bot</span>
                     </button>
@@ -880,71 +881,95 @@
         }
 
         async function startBot() {
-            const url = document.getElementById('urlInput').value.trim();
-            if (!url || !url.startsWith('http')) {
-                alert('Please enter a valid Bicolink URL!');
+            const rawInput = document.getElementById('urlInput').value.trim();
+            const urls = rawInput.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+
+            if (urls.length === 0) {
+                alert('Please enter at least one valid Bicolink URL!');
                 return;
             }
 
             // Bersihkan log sebelumnya
             clearLog();
             setRunning(true);
-            updateStatus('Connecting to server...');
 
-            // Buat session baru
-            sessionId = genSessionId();
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                const displayIndex = i + 1;
+                
+                addLog('step', `\n>>> QUEUE: Processing link ${displayIndex} of ${urls.length} <<<`);
+                addLog('info', `Target: ${url}`);
+                updateStatus(`Processing ${displayIndex}/${urls.length}...`);
 
-
-
-
-            // Mulai SSE listener dulu
-            eventSource = new EventSource(`${backendBase}/stream/${sessionId}`);
-            eventSource.onmessage = (e) => {
                 try {
-                    const data = JSON.parse(e.data);
+                    await processLink(url, displayIndex, urls.length);
+                } catch (err) {
+                    addLog('error', `❌ Error on link ${displayIndex}: ${err.message}`);
+                    // Continue to next link even if one fails
+                }
+            }
 
-                    if (data.type === 'close') {
-                        eventSource.close();
-                        setRunning(false);
-                        return;
+            setRunning(false);
+            updateStatus('Batch operations completed.');
+            addLog('success', `\n✅ ALL ${urls.length} LINKS PROCESSED SUCCESSFULLY.`);
+        }
+
+        function processLink(url, index, total) {
+            return new Promise((resolve, reject) => {
+                sessionId = genSessionId();
+                
+                // Mulai SSE listener
+                eventSource = new EventSource(`${backendBase}/stream/${sessionId}`);
+                
+                eventSource.onmessage = (e) => {
+                    try {
+                        const data = JSON.parse(e.data);
+
+                        if (data.type === 'close') {
+                            eventSource.close();
+                            resolve();
+                            return;
+                        }
+
+                        if (data.type === 'code') {
+                            showCode(data.message);
+                        }
+
+                        // Deteksi step header (--- STEP X ---)
+                        const type = data.message.includes('---') ? 'step' : data.type;
+                        addLog(type, data.message, data.ts);
+
+                        // Update status bar
+                        if (data.type === 'info' || data.type === 'step') {
+                            const cleanMsg = data.message.replace(/[🚀✅⚠️❌]/g, '').trim().substring(0, 50);
+                            updateStatus(`[${index}/${total}] ${cleanMsg}`);
+                        }
+                    } catch (e) { 
+                        // Just log JSON error but don't reject yet
                     }
+                };
 
-                    if (data.type === 'code') {
-                        showCode(data.message);
-                    }
+                eventSource.onerror = (e) => {
+                    eventSource.close();
+                    reject(new Error('SSE connection failed. Server might be offline.'));
+                };
 
-                    // Deteksi step header (--- STEP X ---)
-                    const type = data.message.includes('---') ? 'step' : data.type;
-                    addLog(type, data.message, data.ts);
-
-                    // Update status bar
-                    if (data.type === 'info' || data.type === 'step') {
-                        updateStatus(data.message.replace(/[🚀✅⚠️❌]/g, '').trim().substring(0, 60));
-                    }
-                } catch (e) { }
-            };
-
-            eventSource.onerror = (e) => {
-                const rs = eventSource.readyState; // 0=CONNECTING, 1=OPEN, 2=CLOSED
-                addLog('error', `❌ SSE connection failed. Is the server online?`);
-                eventSource.close();
-                setRunning(false);
-            };
-
-            // Kirim request ke server
-            try {
-                const resp = await fetch(`${backendBase}/run`, {
+                // Kirim request ke server
+                fetch(`${backendBase}/run`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, sessionId })
+                }).then(resp => {
+                    if (!resp.ok) {
+                        addLog('error', `❌ Server responded with HTTP ${resp.status}`);
+                        eventSource.close();
+                        reject(new Error(`Server error ${resp.status}`));
+                    }
+                }).catch(err => {
+                    eventSource.close();
+                    reject(err);
                 });
-                if (!resp.ok) addLog('error', `❌ Server responded with: HTTP ${resp.status}`);
-            } catch (err) {
-
-                addLog('error', `Connection error: ${err.message}`);
-                setRunning(false);
-                eventSource.close();
-            }
+            });
         }
 
         // Enter key untuk submit
