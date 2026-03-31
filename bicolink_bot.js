@@ -392,17 +392,21 @@ async function runBot(targetUrl, onLog) {
                 await sleep(5000);
 
                 const bodyText = await safeEval(mainPage, () => document.body.innerText || '');
-                const rawCodes = bodyText ? bodyText.match(/v_FilesPan\dBot_[A-Za-z0-9_\-]+/g) : null;
+                const htmlLinks = await safeEval(mainPage, () => {
+                    return Array.from(document.querySelectorAll('a')).map(a => a.href).join('\n');
+                });
+                const fullTextToSearch = (bodyText || '') + '\n' + (htmlLinks || '');
+                const rawCodes = fullTextToSearch.match(/https:\/\/t\.me\/[A-Za-z0-9_]+\?start=[A-Za-z0-9_\-]+/g);
                 const codes = rawCodes ? [...new Set(rawCodes)] : null;
 
                 if (codes && codes.length > 0) {
-                    log('success', 'KODE BERHASIL DIEKSTRAK:');
+                    log('success', 'LINK TELEGRAM BOT BERHASIL DIEKSTRAK:');
                     codes.forEach((code) => {
                         log('code', code);
                         extractedCodes.push(code);
                     });
                 } else {
-                    log('warn', 'Kode v_FilesPanXBot_ tidak ditemukan di halaman ini.');
+                    log('warn', 'Link Telegram bot tidak ditemukan di halaman ini.');
                     log('info', '--- Konten halaman Snote (800 char) ---');
                     log('info', bodyText ? bodyText.substring(0, 800) : '(kosong)');
                     log('info', '---------------------------------------');
