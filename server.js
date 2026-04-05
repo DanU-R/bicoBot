@@ -1,17 +1,13 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { runBot } = require('./bicolink_bot');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    if (req.method === 'OPTIONS') return res.sendStatus(200);
-    next();
-});
+// Enable CORS for all routes to fix preflight/origin issues
+app.use(cors());
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -23,7 +19,6 @@ app.get('/stream/:sessionId', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
 
     res.write(`data: ${JSON.stringify({ type: 'info', message: 'Terhubung ke server. Menunggu bot...', ts: Date.now() })}\n\n`);
 
