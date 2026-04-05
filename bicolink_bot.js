@@ -7,7 +7,12 @@ const readline = require('readline');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const safeUrl = (page) => { try { return page.url(); } catch (e) { return ''; } };
 const safeEval = async (page, fn, ...args) => {
-    try { return await page.evaluate(fn, ...args); } catch (e) { return null; }
+    try { return await page.evaluate(fn, ...args); } catch (e) { 
+        if (e.message && (!e.message.includes('detached Frame') && !e.message.includes('Execution context was destroyed'))) {
+            console.warn('[!] safeEval Exception:', e.message.substring(0, 100));
+        }
+        return null; 
+    }
 };
 
 async function runBot(targetUrl, onLog) {
@@ -32,14 +37,13 @@ async function runBot(targetUrl, onLog) {
             '--disable-setuid-sandbox',
             '--disable-blink-features=AutomationControlled',
             '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-software-rasterizer',
-            '--single-process'
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--window-size=1280,800'
         ]
     });
 
     const VALID_DOMAINS = ['go.bicolink.net', 'bicolink.com', 'bewbin.com', 'newsbico.com',
-        'lajangspot.web.id', 'snote.vip', 'snote.app', 'zireemilsoude.net', 'coinershop.com', 'google.com/url'];
+        'lajangspot.web.id', 'mbantul.my.id', 'snote.vip', 'snote.app', 'zireemilsoude.net', 'coinershop.com', 'google.com/url'];
 
     let mainPage;
     browser.on('targetcreated', async (target) => {
@@ -48,7 +52,8 @@ async function runBot(targetUrl, onLog) {
                 const newPage = await target.page();
                 if (!newPage || !mainPage) return;
                 if (newPage.target()._targetId === mainPage.target()._targetId) return;
-                await sleep(1500);
+                // Wait a bit longer for URL to settle after redirect chains
+                await sleep(3000);
                 let newUrl = '';
                 try { newUrl = newPage.url(); } catch (e) { }
                 const isValid = VALID_DOMAINS.some(d => newUrl.includes(d));
@@ -60,12 +65,20 @@ async function runBot(targetUrl, onLog) {
                     log('info', `--> [POPUP DITUTUP] Tab iklan: ${newUrl.substring(0, 50)}`);
                     newPage.close().catch(() => { });
                 } else {
+                    // Wait longer for about:blank tabs that may redirect
                     setTimeout(async () => {
                         try {
                             const u = newPage.url();
-                            if (!VALID_DOMAINS.some(d => u.includes(d))) newPage.close().catch(() => { });
+                            const nowValid = VALID_DOMAINS.some(d => u.includes(d));
+                            if (nowValid) {
+                                log('info', `--> [TAB PINDAH DELAYED] Berpindah ke: ${u.substring(0, 60)}`);
+                                mainPage = newPage;
+                                try { await newPage.bringToFront(); } catch (e) { }
+                            } else {
+                                newPage.close().catch(() => { });
+                            }
                         } catch (e) { }
-                    }, 2500);
+                    }, 4000);
                 }
             } catch (e) { }
         }
@@ -73,7 +86,7 @@ async function runBot(targetUrl, onLog) {
 
     try {
         mainPage = await browser.newPage();
-        await mainPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await mainPage.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
         await mainPage.setViewport({ width: 1280, height: 800 });
 
         log('step', '\n--- STEP 1: INITIAL ACCESS ---');
@@ -104,21 +117,37 @@ async function runBot(targetUrl, onLog) {
             }
         }
 
-        log('info', 'Menunggu 20 detik untuk inisialisasi...');
-        await sleep(20000);
+        log('info', 'Menunggu inisialisasi dan mensimulasikan interaksi scroll (20 detik)...');
+        for (let j = 0; j < 10; j++) {
+            try { await mainPage.mouse.move(100 + Math.floor(Math.random() * 500), 100 + Math.floor(Math.random() * 500), { steps: 5 }); } catch(e) {}
+            await safeEval(mainPage, () => { window.scrollBy(0, 300); });
+            await sleep(1000);
+            await safeEval(mainPage, () => { window.scrollBy(0, -100); });
+            if (j === 5) {
+                // Kadang tombol butuh kita scroll sampai ke paling bawah
+                await safeEval(mainPage, () => { window.scrollTo(0, document.body.scrollHeight || 3000); });
+            }
+            await sleep(1000);
+        }
 
         log('info', 'Mencari tombol Generate Text...');
         const generateClicked = await safeEval(mainPage, () => {
             const candidates = [
                 document.querySelector('a[href="#wpsafegenerate"]'),
                 document.querySelector('#wpsafegenerate'),
+                document.querySelector('button.wpsafe-btn'),
+                document.querySelector('a.wpsafe-btn'),
                 ...Array.from(document.querySelectorAll('a, button, img')).filter(el => {
                     const t = (el.innerText || el.alt || el.src || '').toLowerCase();
-                    return t.includes('generate') || t.includes('mulai') || t.includes('start');
+                    return t.includes('generate') || t.includes('mulai') || t.includes('start') || t.includes('continue') || t.includes('download') || t.includes('lanjut');
                 })
             ].filter(Boolean);
             const el = candidates[0];
-            if (el) { el.click(); return true; }
+            if (el) {
+                el.scrollIntoView({ block: 'center' });
+                el.click(); 
+                return true; 
+            }
             return false;
         });
         if (generateClicked) log('success', 'Tombol Generate Text berhasil diklik.');
@@ -154,7 +183,7 @@ async function runBot(targetUrl, onLog) {
                     break;
                 }
 
-                const result = await mainPage.evaluate(() => {
+                const result = await safeEval(mainPage, () => {
                     const isVisible = (el) => {
                         if (!el) return false;
                         const style = window.getComputedStyle(el);
@@ -163,26 +192,29 @@ async function runBot(targetUrl, onLog) {
                         return rect.width > 0 && rect.height > 0;
                     };
 
-                    const wpLink = document.querySelector('#wpsafe-link');
-                    if (wpLink && isVisible(wpLink)) {
-                        const anchor = wpLink.querySelector('a[href]');
-                        if (anchor && anchor.href) {
-                            window.location.href = anchor.href;
-                            return `navigated: ${anchor.href.substring(0, 30)}`;
-                        }
-                        const btn = wpLink.querySelector('button, a');
-                        if (btn) { btn.click(); return 'wpsafe clicked'; }
-                    }
-
-                    for (const sel of ['button.close', '[aria-label="Close"]', '[aria-label="close"]', '.modal-close', '.popup-close']) {
+                    // 1. Prioritaskan menutup iklan yang menutupi layar sesuai instruksi pengguna
+                    for (const sel of ['#dismiss-button-element', '.close-button', 'button.close', '[aria-label="Close"]', '[aria-label="close"]', '.modal-close', '.popup-close']) {
                         const el = document.querySelector(sel);
                         if (el && isVisible(el)) { el.click(); return 'popup_closed'; }
                     }
                     const closeEl = Array.from(document.querySelectorAll('button, div, span')).find(el => {
                         const txt = (el.innerText || el.textContent || '').trim();
-                        return isVisible(el) && (txt === '×' || txt === '✕' || txt === '✖');
+                        return isVisible(el) && (txt === '×' || txt === '✕' || txt === '✖' || txt.toLowerCase() === 'close');
                     });
                     if (closeEl) { closeEl.click(); return 'popup_closed'; }
+
+                    // 2. Klik wpsafe-btn (Continue / DOWNLOAD LINK)
+                    const wpLink = document.querySelector('#wpsafe-link');
+                    const btn = wpLink ? wpLink.querySelector('button.wpsafe-btn') : document.querySelector('button.wpsafe-btn, a.wpsafe-btn');
+                    const anchor = wpLink ? wpLink.querySelector('a[href]') : document.querySelector('a.wpsafe-btn[href]');
+                    
+                    if (btn && isVisible(btn)) {
+                        btn.click(); 
+                        return `wpsafe clicked: ${btn.innerText}`;
+                    } else if (anchor && anchor.href && isVisible(anchor)) {
+                        window.location.href = anchor.href;
+                        return `navigated: ${anchor.href.substring(0, 30)}`;
+                    }
 
                     window.scrollBy(0, 150);
                     const timer = document.querySelector('#timer, .timer, #countdown');
@@ -190,35 +222,105 @@ async function runBot(targetUrl, onLog) {
                     return timerVal ? `waiting_timer: ${timerVal}s` : null;
                 });
 
+                if (result === null) {
+                    log('warn', '[!] Frame error (null). Mengecek ulang semua tab aktif...');
+                    try {
+                        const pages = await browser.pages();
+                        let foundLivePage = null;
+                        for (let p of pages) {
+                            if (!p.isClosed()) {
+                                const u = safeUrl(p);
+                                if (u && VALID_DOMAINS.some(d => u.includes(d))) {
+                                    if (await safeEval(p, () => true)) {
+                                        foundLivePage = p;
+                                    }
+                                }
+                            }
+                        }
+                        if (foundLivePage && mainPage !== foundLivePage) {
+                            mainPage = foundLivePage;
+                            log('info', `[+] Beralih ke tab valid: ${safeUrl(mainPage).substring(0, 50)}`);
+                        } else {
+                            log('info', '[!] Me-reload halaman untuk memulihkan koneksi...');
+                            await mainPage.reload({ timeout: 15000, waitUntil: 'domcontentloaded' }).catch(()=>{});
+                        }
+                    } catch(e) {}
+                    await sleep(3000);
+                    continue;
+                }
+
                 if (result && result.startsWith('navigated')) {
                     log('info', `[+] ${result} (Percobaan ${i + 1}). Menunggu loading...`);
                     await sleep(8000);
+                    // Scan untuk tab valid baru
+                    try {
+                        const pages = await browser.pages();
+                        for (let p of pages.reverse()) {
+                            if (!p.isClosed()) {
+                                const u = safeUrl(p);
+                                if (u && VALID_DOMAINS.some(d => u.includes(d)) && p !== mainPage) {
+                                    if (await safeEval(p, () => true)) {
+                                        log('info', `[+] Tab baru ditemukan setelah navigasi: ${u.substring(0, 60)}`);
+                                        mainPage = p;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {}
                 } else if (result && result.startsWith('wpsafe')) {
-                    log('info', `[+] ${result} (Percobaan ${i + 1}). Menunggu...`);
-                    await sleep(7000);
+                    log('info', `[+] ${result} (Percobaan ${i + 1}). Menunggu tab navigasi...`);
+                    // Tunggu dan scan tab baru secara aktif
+                    for (let w = 0; w < 5; w++) {
+                        await sleep(2500);
+                        try {
+                            const pages = await browser.pages();
+                            let found = false;
+                            for (let p of pages.reverse()) {
+                                if (!p.isClosed()) {
+                                    const u = safeUrl(p);
+                                    if (u && u !== 'about:blank' && VALID_DOMAINS.some(d => u.includes(d)) && p !== mainPage) {
+                                        if (await safeEval(p, () => true)) {
+                                            log('info', `[+] Tab baru ditemukan: ${u.substring(0, 60)}`);
+                                            mainPage = p;
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (found) break;
+                        } catch(e) {}
+                    }
                 } else if (result && result.startsWith('popup_closed')) {
                     log('info', `[!] Popup iklan ditutup (Percobaan ${i + 1}).`);
                     await sleep(1500);
-                } else if (result && result.startsWith('waiting_timer')) {
+                } else {
+                    // Coba tutup iframe ads via Puppeteer jika di-evaluate tidak kena
+                    try {
+                        for (const frame of mainPage.frames()) {
+                            try {
+                                const dismissBtn = await frame.$('#dismiss-button-element');
+                                if (dismissBtn) {
+                                    await dismissBtn.click();
+                                    log('info', '[!] Popup iklan iframe (dismiss-button-element) ditutup.');
+                                    await sleep(1500);
+                                    break;
+                                }
+                            } catch(e) {}
+                        }
+                    } catch(e) {}
+                }
+                
+                if (result && result.startsWith('waiting_timer')) {
                     log('info', `  [${i + 1}] ${result} - URL: ${safeUrl(mainPage).substring(0, 50)}`);
                     await sleep(3000);
-                } else {
+                } else if (!result.startsWith('navigated') && !result.startsWith('wpsafe') && !result.startsWith('popup_closed')) {
                     if (i % 3 === 0) log('info', `  [${i + 1}] Mencari #wpsafe-link di: ${safeUrl(mainPage).substring(0, 60)}`);
                     await sleep(2000);
                 }
             } catch (frameErr) {
-                log('warn', `[!] Frame berpindah: ${frameErr.message.substring(0, 50)}`);
-                // Try to recover mainPage reference if it gets detached
-                if (frameErr.message.includes('detached Frame') || frameErr.message.includes('Execution context was destroyed')) {
-                    try {
-                        const pages = await browser.pages();
-                        if (pages.length > 0) {
-                            // Find the most recently active/valid page
-                            mainPage = pages[pages.length - 1];
-                            log('info', `[+] Merecover referensi halaman ke: ${safeUrl(mainPage).substring(0, 50)}`);
-                        }
-                    } catch (e) {}
-                }
+                log('warn', `[!] Error tak terduga loop: ${frameErr.message.substring(0, 50)}`);
                 await sleep(3000);
             }
         }
