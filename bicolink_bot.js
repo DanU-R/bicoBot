@@ -208,6 +208,17 @@ async function runBot(targetUrl, onLog) {
                 }
             } catch (frameErr) {
                 log('warn', `[!] Frame berpindah: ${frameErr.message.substring(0, 50)}`);
+                // Try to recover mainPage reference if it gets detached
+                if (frameErr.message.includes('detached Frame') || frameErr.message.includes('Execution context was destroyed')) {
+                    try {
+                        const pages = await browser.pages();
+                        if (pages.length > 0) {
+                            // Find the most recently active/valid page
+                            mainPage = pages[pages.length - 1];
+                            log('info', `[+] Merecover referensi halaman ke: ${safeUrl(mainPage).substring(0, 50)}`);
+                        }
+                    } catch (e) {}
+                }
                 await sleep(3000);
             }
         }
